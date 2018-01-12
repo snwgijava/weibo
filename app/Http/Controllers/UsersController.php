@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Auth;
 
 class UsersController extends Controller
 {
@@ -29,6 +30,8 @@ class UsersController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
+        //注册后的用户会自动进行登录
+        Auth::login($user);
         //访问会话实例，flash表示下次请求时有效
         session()->flash('success','欢迎，您将在这里开启一段新的旅程');
 
