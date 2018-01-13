@@ -10,6 +10,7 @@ class User extends Authenticatable  //Authenticatable 授权相关功能的引�
     //消息通知相关功能引用
     use Notifiable;
 
+
     /**
      * The attributes that are mass assignable.
      *过滤用户提交的字段，只有包含在该属性中的字段才能够被正常更新
@@ -34,6 +35,15 @@ class User extends Authenticatable  //Authenticatable 授权相关功能的引�
         //用 strtolower 方法将邮箱转换为小写；将小写的邮箱使用 md5 方法进行转码；将转码后的邮箱与链接、尺寸拼接成完整的 URL 并返回；
         $hash = md5(strtolower(trim($this->attributes['email'])));
         return "http://www.gravatar.com/avatar/$hash?s=$size";
+    }
+
+    //发送邮件相关,boot 方法会在用户模型类完成初始化之后进行加载，因此我们对事件的监听需要放在该方法中。
+    public static function boot(){
+        parent::boot();
+
+        static::creating(function($user){
+            $user->activation_token = str_random(30);
+        });
     }
 
 }

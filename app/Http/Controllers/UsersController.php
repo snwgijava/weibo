@@ -12,7 +12,7 @@ class UsersController extends Controller
     public function __construct(){
         //第一个参数是中间件名称，第二个是要过滤进行的动作, 这里表示除了下面的几个的动作必须登录才能访问
         $this->middleware('auth',[
-            'except' => ['show', 'create', 'store','index']
+            'except' => ['show', 'create', 'store','index','confirmEmail']
         ]);
 
         //只让未登录用户访问注册页面,登录用户无法访问注册页面
@@ -49,11 +49,13 @@ class UsersController extends Controller
             'password' => bcrypt($request->password),
         ]);
         //注册后的用户会自动进行登录
-        Auth::login($user);
+//        Auth::login($user);
+        //注册时发送邮件
+        $this->sendEmailConfirmationTo($user);
         //访问会话实例，flash表示下次请求时有效
-        session()->flash('success','欢迎，您将在这里开启一段新的旅程');
+        session()->flash('success','验证邮件已发送到你的注册邮箱上，请注意查收。');
 
-        return redirect()->route('users.show',[$user]);
+        return redirect('/');
     }
 
     public function edit(User $user){
@@ -89,5 +91,32 @@ class UsersController extends Controller
         $user->delete();
         session()->flash('success','成功删除用户！');
         return back();
+    }
+
+    //发送邮件
+    public function sendEmailConfirmationTo($user){
+        $view = 'emails.confirm';
+        $data = compact('user');
+        $from = 'aufree@yousails.com';
+        $name = 'Aufree';
+        $to = $user->email;
+        $subject = "感谢注册 简易微博 应用！请确认你的邮箱。";
+
+        \Mail::send($view,$data,function ($message) use ($from,$name,$to,$subject){
+            $message->from($from,$name)->to($to)->subject($subject);
+        });
+    }
+
+    //激活帐号
+    public function confirmEmail($token){
+        $user = User::where('activation_token',$token)->firstOrFail();
+
+        $user->activated = true;
+        $user->activation_token = null;
+        $user->save();
+
+        Auth::login($user);
+        session()->flash('success','恭喜您，激活成功！');
+        return redirect()->route('users.show',[$user]);
     }
 }
