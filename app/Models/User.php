@@ -52,4 +52,15 @@ class User extends Authenticatable  //Authenticatable 授权相关功能的引�
         $this->notify(new ResetPassword($token));
     }
 
+    public function statuses(){
+        return $this->hasMany(Status::class);
+    }
+
+    public function feed()
+    {
+        return $this->statuses()
+            ->orderBy('created_at', 'desc');
+    }
+
+
 }
